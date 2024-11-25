@@ -4,40 +4,38 @@ using System.Collections;
 
 public class EnemyHealth : MonoBehaviour {
 
-	// The amount of health the enemy starts the game with.
 	public int startingHealth = 100;  
-	// The current health the enemy has.
 	[HideInInspector]
 	public int currentHealth;  
-	// The speed at which the enemy sinks through the floor when dead.
+	// Velocidade em que o inimigo entra no chao quando morto
 	public float sinkSpeed = 2.5f;   
-	// The amount added to the player's score when the enemy dies.
-	public int scoreValue = 10; 
-	// The sound to play when the enemy dies.
+	// Quantidade de score que se adiciona para o player quando o inimigo morre
+	public int scoreValue = 20; 
+	// O som que toca quando o inimigo morre
 	public AudioClip deathClip;    
-	// The sound to play when the enemy burns up.
+	// O som que toca quando o inimigo queima
 	public AudioClip burnClip;  
-	// The particle system to play when the enemy is burning
+	// O sistema de particulas que aparece quando o inimigo queima
 	public ParticleSystem deathParticles;  
-	// The health bar we display over our head.
+	// A barra de vida que aparece sobre a cabeca
 	public Slider healthBarSlider;
-	// We spawn two eyes when we die. Gibs, you know. :p
+	// Aparece dois olhos quando o inimigo é derrotado
 	public GameObject eye;
 	
-	// The health bar slider instance for this enemy.
+	// A instancia do slider da barra de vida para esse inimigo
 	Slider sliderInstance;
-	// Whether the enemy is dead.
+	// Verificacao da morte do inimigo
 	bool isDead;
-	// Whether the enemy is burning.
+	// Verificacao se o inimigo esta queimando
 	bool isBurning = false;
-	// The rim color for our shader. We change this to simulate a red hit effect.
+	// A rim color do shader, muda para simular um efeito vermelho de hit
 	Color rimColor;
-    // Changing the rim power as well produces a better effect.
+    // Mudando a rim power para produzir um efeito melhor
     float rimPower;
-    // The cutoff value for our dissolve shader. We change this to dissolve our
-    // body when we burn up.
+	// Esse é o valor de cutoff do shader de dissolução. Modificamos esse valor para controlar a dissolução do corpo quando ele é queimado.
+    
     float cutoffValue = 0f;
-	// Components and scripts we need references to.
+	// Componentes e scripts que precisam ser referenciados
 	Animator anim;            
 	AudioSource enemyAudio;        
 	CapsuleCollider capsuleCollider;   
@@ -48,7 +46,6 @@ public class EnemyHealth : MonoBehaviour {
 	PickupManager pickupManager;
 
 	void Awake() {
-		// Setting up the references.
 		anim = GetComponent<Animator>();
 		enemyAudio = GetComponent<AudioSource>();
 		capsuleCollider = GetComponent<CapsuleCollider>();
@@ -60,7 +57,6 @@ public class EnemyHealth : MonoBehaviour {
 	}
 
 	void Start() {
-		// Setting the current health when the enemy first spawns.
 		currentHealth = startingHealth;
 
 		// Instantiate our health bar GUI slider.
@@ -69,14 +65,14 @@ public class EnemyHealth : MonoBehaviour {
 		sliderInstance.GetComponent<Healthbar>().enemy = gameObject;
 		sliderInstance.gameObject.SetActive(false);
 
-		// Get the current rim color and rim power from our material.
+
 		rimColor = myRenderer.materials[0].GetColor("_RimColor");
         rimPower = myRenderer.materials[0].GetFloat("_RimPower");
     }
 
 	void Update() {
-		// If we are burning we update the cutoff value for our materials so they
-		// gradually dissolve over time.
+		// Se estiver queimando, atualiza o valor de cutoff dos materiais
+		// para que eles se dissolvam gradualmente ao longo do tempo.
 		if (isBurning) {
 			cutoffValue = Mathf.Lerp(cutoffValue, 1f, 1.3f * Time.deltaTime);
 			myRenderer.materials[0].SetFloat("_Cutoff", cutoffValue);
@@ -88,23 +84,23 @@ public class EnemyHealth : MonoBehaviour {
         StopCoroutine("Ishit");
         StartCoroutine("Ishit");
 
-		// If the enemy is dead there's no need to take damage so exit the function.
+		// Se o inimigo está morto nao precisa tomar mais dano, entao sai da funcao
 		if (isDead)
 			return;
 
 		GetComponent<Rigidbody>().AddForceAtPosition(transform.forward * -300, hitPoint);
 		
-		// Reduce the current health by the amount of damage sustained.
+		// Reduz a saúde atual pela quantidade de dano sofrido
 		currentHealth -= amount;
 
-		// Set the health bar's value to the current health.
+		// Ajusta o valor da barra de vida para a vida atual
 		if (currentHealth <= startingHealth) {
 			sliderInstance.gameObject.SetActive(true);
 		}
 		int sliderValue = (int) Mathf.Round(((float)currentHealth / (float)startingHealth) * 100);
 		sliderInstance.value = sliderValue;
 		
-		// If the current health is less than or equal to zero the enemy is dead.
+		// Se o valor da vida atual é menos ou igual a 0 o inimigo esta morto
 		if (currentHealth <= 0) {
 			Death();
 		}
@@ -132,33 +128,32 @@ public class EnemyHealth : MonoBehaviour {
     }
 
 	void Death() {
-		// The enemy is dead.
 		isDead = true;
 
-		// Tell the animator that the enemy is dead.
+		// Diz para o animador que o inimigo esta morto
 		anim.SetTrigger("Dead");
 		
-		// Change the audio clip of the audio source to the death clip and play it (this will stop the hurt clip playing).
+		// Muda o clipe de audio para a fonte do audio de morte e toca
 		enemyAudio.clip = deathClip;
 		enemyAudio.Play();
 
-		// Find and disable the Nav Mesh Agent.
+		// Acha e desabilita o agente do Nav Mesh
 		if (GetComponent<UnityEngine.AI.NavMeshAgent>()) {
 			GetComponent<UnityEngine.AI.NavMeshAgent>().enabled = false;
 		}
 		
-		// Find the rigidbody component and make it kinematic (since we use Translate to sink the enemy).
+		// Acha o componente rigidbody e o faz kinematic
 		GetComponent<Rigidbody>().isKinematic = true;
 
-		// Increase the score by the enemy's score value.
+		// Adiciona a pontuacao pelo valor do inimigo
 		scoreManager.AddScore(scoreValue);
 
 		waveManager.enemiesAlive--;
 
-		// Turn the collider into a trigger so shots can pass through it.
+		// Transforma o collider em um trigger para que os tiros passem por ele
 		capsuleCollider.isTrigger = true;
 
-		// Remove this object.
+		// Remove esse objeto
 		StartCoroutine(StartSinking());
 		waveManager.playEnemyTextAnimation ();
 
@@ -170,13 +165,13 @@ public class EnemyHealth : MonoBehaviour {
 
 		isBurning = true;
 
-		// And play the particles.
+
 		deathParticles.Play();
 
 		enemyAudio.clip = burnClip;
 		enemyAudio.Play();
 
-		// Spawn two eyes.
+		// Spawna os dois olhos
 		for (int i = 0; i < 2; i++) {
 			GameObject instantiatedEye = Instantiate(eye, transform.position + new Vector3(0, 0.3f, 0), transform.rotation) as GameObject;
 			instantiatedEye.GetComponent<Rigidbody>().velocity = transform.TransformDirection(new Vector3 (Random.Range(-5.0f, 5.0f), Random.Range(-5.0f, 5.0f), Random.Range(-5.0f, 5.0f)));
@@ -184,30 +179,31 @@ public class EnemyHealth : MonoBehaviour {
 
 		SpawnPickup();
 
-		// After 2 seconds destory the enemy.
+
 		Destroy(gameObject, 3f);
 	}
 
 	/** 
-	 * Chance to spawn a pickup on death.
+	 * Chance de spawnar um power up na morte
 	 */
 	void SpawnPickup() {
-		// We spawn our pickups slightly above the ground.
+		// Spawna um pouco acima do chao
 		Vector3 spawnPosition = transform.position + new Vector3(0, 0.3f, 0);
 
-		// Spawn an extra bullet pickup when we reach a certain score.
+		// Spawna o power up de tiro extra apos um certo score
 		if (scoreManager.GetScore () >= pickupManager.scoreNeededForExtraBullet) {
 			Instantiate (pickupManager.bulletPickup, spawnPosition, transform.rotation);
 
-			// Increase the score needed to spawn a pickup.
+			// Aumenta o score necessario para spawnar um power up
 			pickupManager.scoreNeededForExtraBullet += pickupManager.extraScoreNeededAfterEachPickup;
 		} else {
-			// Spawns one of our 3 powerup pickups randomly.
-			// It's set up to spawn a pickup 20% of the time.
-			// And the pickups are selected accordingly:
-			// - 30% of the time it will be a bounce pickup
-			// - 20% of the time it will be a pierce pickup
-			// - 50% of the time it will be a health pickup
+			// Gera aleatoriamente um dos 3 powerups.
+			// Está configurado para gerar um powerup 20% das vezes.
+			// E os powerups sao selecionados da seguinte forma:
+			// - 30% das vezes sera um powerup de ricochete (bounce pickup)
+			// - 20% das vezes sera um powerup de perfuracao (pierce pickup)
+			// - 50% das vezes sera um powerup de saúde (health pickup)
+
 			float rand = Random.value;
 			if (rand <= 0.2f) {
 				// Bounce.

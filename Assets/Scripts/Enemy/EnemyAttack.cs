@@ -3,41 +3,41 @@ using System.Collections;
 
 public class EnemyAttack : MonoBehaviour {
 
-	// The time in seconds between each attack.
-	public float timeBetweenAttacks = 0.5f;  
-	// The amount of health taken away per attack.
+	// Tempo entre os ataques em segundos
+	public float timeBetweenAttacks = 1f;  
+	// Dano do ataque
 	public int attackDamage = 10;               
 	   
-	// Reference to the player GameObject.
+	// Referencia ao gameobj do player
 	GameObject player;       
-	// Reference to the player's health.
+	// Referencia a vida do player
 	PlayerHealth playerHealth;     
-	// Reference to this enemy's health.
+	// Referencia a vida do inimigo
 	EnemyHealth enemyHealth; 
-	// Whether player is within the trigger collider and can be attacked.
+	// Verificar se o player está na dentro do trigger do collider e pode ser atacado
 	bool playerInRange;   
-	// Timer for counting up to the next attack.
+	// Timer para o próximo ataque
 	float timer;                               
 	
 	void Awake() {
-		// Setting up the references.
+		// Arrumando as referencias
 		player = GameObject.FindGameObjectWithTag("Player");
 		playerHealth = player.GetComponent<PlayerHealth>();
 		enemyHealth = GetComponent<EnemyHealth>();
 	}
 
 	void OnTriggerEnter(Collider other) {
-		// If the entering collider is the player the player is in range.
+		// Verificando se o colisor que está na distancia é o do player
 		if (other.gameObject == player) {
 			playerInRange = true;
-			// Add a slight "reaction time".
+			// Um pequeno tempo de reacao
 			timer = 0.2f;
 		}
 	}
 	
 	
 	void OnTriggerExit(Collider other) {
-		// If the exiting collider is the player the player is no longer in range.
+		// Verificando se o colisor do player nao esta mais no range
 		if (other.gameObject == player) { 
 			playerInRange = false;
 		}
@@ -45,11 +45,10 @@ public class EnemyAttack : MonoBehaviour {
 	
 	
 	void Update() {
-		// Add the time since Update was last called to the timer.
+		// Adiciona o tempo desde que o ultimo update foi chamado para o timer
 		timer += Time.deltaTime;
 		
-		// If the timer exceeds the time between attacks, the player is in range,
-		// we are alive and the player is alive then attack.
+		// Se o tempo excede o tempo entre ataques o player está dentro do range, o inimigo esta vivo e o player, ataque realizado
 		if (timer >= timeBetweenAttacks && playerInRange && enemyHealth.currentHealth > 0 && playerHealth.currentHealth > 0) {
 			Attack();
 		}
@@ -57,10 +56,10 @@ public class EnemyAttack : MonoBehaviour {
 	
 	
 	void Attack() {
-		// Reset the timer.
+		// Reseta o timer.
 		timer = 0f;
 		
-		// Damage the player.
+		// Aplica o dano no player
 		playerHealth.TakeDamage(attackDamage);
 	}
 }

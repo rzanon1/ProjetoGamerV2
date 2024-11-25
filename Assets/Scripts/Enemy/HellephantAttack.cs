@@ -3,7 +3,7 @@ using System.Collections;
 
 public class HellephantAttack : MonoBehaviour {
 
-	// The time in seconds between each attack.
+
 	public float timeBetweenAttacks = 3f;  
 	public int bulletsPerVolley = 5;
 	public float timeBetweenBullets = 0.1f;
@@ -14,15 +14,11 @@ public class HellephantAttack : MonoBehaviour {
 	public AudioClip shootClip;
 	public AudioClip specialClip;
 	   
-	// Reference to the player GameObject.
+
 	GameObject player;           
-	// Reference to this enemy's health.
 	EnemyHealth enemyHealth; 
-	// Whether player is within the trigger collider and can be attacked.
 	bool playerInRange;   
-	// Reference to the animator.
 	Animator anim;
-	// Timer for counting up to the next attack.
 	float attackTimer;
 	float bulletTimer;
 	int attackCount;
@@ -32,11 +28,9 @@ public class HellephantAttack : MonoBehaviour {
 	float landingTime;
 	bool usedSpecial = false;
 	bool landed = false;
-	// Reference to the audio source.
 	AudioSource enemyAudio;  
 	
 	void Awake() {
-		// Setting up the references.
 		player = GameObject.FindGameObjectWithTag("Player");
 		enemyHealth = GetComponent<EnemyHealth>();
 		enemyAudio = GetComponent<AudioSource>();
@@ -45,21 +39,20 @@ public class HellephantAttack : MonoBehaviour {
 	}
 
 	void Start() {
-		// Make sure we start in the air when we're spawned from the wave manager.
+		// Apenas para ter certeza que é spawnado no ar quando chamado pelo WaveManager
 		transform.position = new Vector3(transform.position.x, floatHeight, transform.position.z);
 	}
 
 	void Update() {
-		// The time between our attacks.
 		attackTimer += Time.deltaTime;
-		// If the timer exceeds the time between attacks, the player is in range and this enemy is alive attack.
+	
 		if (attackTimer > timeBetweenAttacks && enemyHealth.currentHealth > 0) {
 			Attack();
 		}
 	}
 	
 	void Attack() {
-		// The time between each bullet in our normal attack.
+		// Tempo entre cada bala no ataque normal
 		bulletTimer += Time.deltaTime;
 
 		if (attackCount < attacksPerSpecialAttack) {
@@ -69,11 +62,11 @@ public class HellephantAttack : MonoBehaviour {
 				Quaternion rot = rotation * Quaternion.AngleAxis(Random.Range(-5.0f, 5.0f), Vector3.up) * Quaternion.AngleAxis(Random.Range(-5.0f, 5.0f), Vector3.right);
 				Instantiate(bullet, transform.position + new Vector3(0, 0.5f, 0), rot);
 
-				// Play shooting sound.
+				// Toca o audio de tiro
 				enemyAudio.clip = shootClip;
 				enemyAudio.Play();
 
-				// Reset the timer.
+				// Reseta o timer
 				bulletTimer = 0f;
 				bulletCount++;
 
@@ -90,14 +83,14 @@ public class HellephantAttack : MonoBehaviour {
 	}
 
 	void SpecialAttack() {
-		// Start landing.
+		// Comeca a aterrissagem
 		if (!landed) {
 			anim.SetBool("Landing", true);
 			helleMovement.shouldMove = false;
 			landingTime += Time.deltaTime * 5f;
 			transform.position = new Vector3(transform.position.x, Mathf.Lerp(floatHeight, 0, landingTime), transform.position.z);
 		}
-		// Start lifting.
+		// Comeca a voar
 		else {
 			anim.SetBool("Landing", false);
 			helleMovement.shouldMove = true;
@@ -105,24 +98,25 @@ public class HellephantAttack : MonoBehaviour {
 			transform.position = new Vector3(transform.position.x, Mathf.Lerp(0, floatHeight, landingTime), transform.position.z);
 		}
 
-		// When we've landed we fire bullets in all directions.
+		// Quando aterrissa atira em todas as direcoes
 		if (transform.position.y == 0) {
 			landed = true;
 			if (!usedSpecial) {
 				for (int i = 0; i < numberOfBullets; i++) {
-					// Make sure our bullets spread out in an even pattern.
+					// Fazer com que as balas se espalhem em um padrao
 					float angle = i * angleBetweenBullets - ((angleBetweenBullets / 2) * (numberOfBullets - 1));
 					Quaternion rot = transform.rotation * Quaternion.AngleAxis(angle, Vector3.up);
 					Instantiate(bullet, transform.position + new Vector3(0, 0.5f, 0), rot);
 				}
 
-				// Play special sound.
+
 				enemyAudio.clip = specialClip;
 				enemyAudio.Play();
 
 				usedSpecial = true;
-				// Reset the attack timer so we stay on the ground for one whole cycle
-				// before lifting back up.
+				// Reinicia o temporizador de ataque para que permaneça no chão por um ciclo completo
+				// antes de levantar novamente.
+
 				attackTimer = 0;
 				landingTime = 0;
 			}

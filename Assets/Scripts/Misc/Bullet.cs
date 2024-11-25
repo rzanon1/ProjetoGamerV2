@@ -64,11 +64,11 @@ public class Bullet : MonoBehaviour {
 		if (hasHit) {
 			return;
 		}
-
-		// Add the time since Update was last called to the timer.
+			
 		timer += Time.deltaTime;
 
-		// Schedule for destruction if bullet never hits anything.
+		// Destruir depois de um tempo caso a bala nao atinja nada
+
 		if (timer >= life) {
 			Dissipate();
 		}
@@ -77,10 +77,10 @@ public class Bullet : MonoBehaviour {
 		velocity.y = 0;
 		velocity = velocity.normalized * speed;
 
-		// assume we move all the way
+		// Assumir que move completamente
 		newPos += velocity * Time.deltaTime;
 	
-		// Check if we hit anything on the way
+		// Verificar se nao acerta algo no caminho
 		direction = newPos - oldPos;
 		float distance = direction.magnitude;
 
@@ -112,10 +112,11 @@ public class Bullet : MonoBehaviour {
 	}
 
 	/**
-	 * So we don't hit the same enemy twice with the same raycast when we have
-	 * piercing shots. The shot can still bounce on a wall, come back and hit
-	 * the enemy again if we have both bouncing and piercing shots.
-	 */
+ 	* Evita atingir o mesmo inimigo duas vezes com o mesmo raycast
+ 	* quando tem Piercing shot. O tiro ainda pode ricochetear
+ 	* em uma parede, voltar e atingir o inimigo novamente se tivermos
+ 	* tiros tanto perfurantes quanto ricocheteantes.
+ */
 	bool ShouldIgnoreHit (RaycastHit hit) {
 		if (lastHit.point == hit.point || lastHit.collider == hit.collider)
 			return true;
@@ -124,8 +125,9 @@ public class Bullet : MonoBehaviour {
 	}
 
 	/**
-	 * Figure out what to do when we hit something.
-	 */
+ 	* Determinar o que fazer quando atinge algo.
+ 	*/
+
 	void OnHit(RaycastHit hit) {
         Quaternion rotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
 
@@ -156,12 +158,12 @@ public class Bullet : MonoBehaviour {
 			ImpactParticles.transform.rotation = rotation;
 			ImpactParticles.Play();
 
-			// Try and find an EnemyHealth script on the gameobject hit.
+			// Tentar e achar o script da vida do inimiga no gameobj de acerto
 			EnemyHealth enemyHealth = hit.collider.GetComponent<EnemyHealth>();
 			
-			// If the EnemyHealth component exist...
+			// Se o componente da vida do inimigo existe
 			if (enemyHealth != null) {
-				// ... the enemy should take damage.
+				// Ele deve tomar o dano
 				enemyHealth.TakeDamage(damage, hit.point);
 			}
 			if (!piercing) {
@@ -175,11 +177,12 @@ public class Bullet : MonoBehaviour {
         }
 	}
 
-	// Just a method for destroying the game object, but which
-	// first detaches the particle effect and leaves it for a
-	// second. Called if the bullet end its life in midair
-	// so we get an effect of the bullet fading out instead
-	// of disappearing immediately.
+	// Metodo para destruir o objeto do jogo, mas que
+	// primeiro desanexa o efeito de particula e o deixa
+	// por um segundo. Chamado se a bala terminar sua vida
+	// no ar para criar o efeito de desaparecer gradualmente
+	// ao inves de sumir imediatamente.
+
 	void Dissipate() {
 		var normalTrailParticlesEmission = normalTrailParticles.emission.enabled;
 		normalTrailParticlesEmission = false;

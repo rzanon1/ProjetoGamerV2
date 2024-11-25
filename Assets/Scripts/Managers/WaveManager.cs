@@ -5,50 +5,48 @@ using System.Collections.Generic;
 
 public class WaveManager : MonoBehaviour {
 	
-	// Reference to the player's heatlh.
 	public PlayerHealth playerHealth;   
-	// The distance from our Camera View Frustrum we want to spawn enemies
-	// to make sure they are not visisble when they spawn. I'm too lazy to
-	// do any proper checks.
+	// A distância do Camera View Frustum em que os inimigos serão gerados,
+	// garantindo que não sejam visíveis ao serem gerados.
+
 	public float bufferDistance = 200;
-	// The time in seconds between each wave.
+	// Tempo em segundos a cada wave
 	public float timeBetweenWaves = 5f;
-    // The time in seconds between each spawn in a wave.
+    // Tempo entre cada spawn em uma wave
     public float spawnTime = 3f;
-    // The wave to start on.
+    // Wave que inicia
 	public int startingWave = 1;
-    // The difficulty to start on.
+    // Dificuldade que inicia
 	public int startingDifficulty = 1;
-	// Reference to the waves Text component.
 	public Text number;
-	// Reference to the enemies Text component.
 	public Text numberEnemies; 
-    // The number of enemies left alive for the current wave.
+
 	[HideInInspector]
 	public int enemiesAlive = 0;
 
-    // A class depicting one wave with x number of entries.
-    [System.Serializable]
-    public class Wave {
-        public Entry[] entries;
+	// Representa uma onda com múltiplas entradas.
+	[System.Serializable]
+	public class Wave {
+		// Lista de entradas (diferentes tipos de inimigos nesta onda).
+		public Entry[] entries;
 
-        // A class depicting one wave entry.
-        [System.Serializable]
-        public class Entry {
-            // The enemy type to spawn.
-            public GameObject enemy;
-            // The number of enemies to spawn.
-            public int count;
-            // A counter telling us how many have been spawned so far.
-            [System.NonSerialized]
-            public int spawned;
-        }
-    }
+		// Representa uma entrada individual dentro da onda.
+		[System.Serializable]
+		public class Entry {
+			// O tipo de inimigo a ser gerado (prefab).
+			public GameObject enemy;
+			// Quantidade de inimigos deste tipo a ser gerada.
+			public int count;
+			// Contador que rastreia quantos já foram gerados (não serializado).
+			[System.NonSerialized]
+			public int spawned;
+		}
+	}
 
-    // All our waves.
-    public Wave[] waves;
+	// Todas as ondas configuradas para o jogo.
+	public Wave[] waves;
 
-    // Misc private variables needed to make everything work.
+    // Juntando as variaveis para que funcione
     Vector3 spawnPosition = Vector3.zero;
 	int waveNumber;
 	float timer; 
@@ -61,36 +59,37 @@ public class WaveManager : MonoBehaviour {
 	float timeSinceNoEnemiesKilled;
 
 	void Start() {
-		// Let us start on a higher wave and difficulty if we wish.
+		// Permitir iniciar em uma wave maior e na dificuldade que desejar
 		waveNumber = startingWave > 0 ? startingWave - 1 : 0;
 		difficulty = startingDifficulty;
 
-		// Start the next, ie. the first wave.
+		// Inicia a proxima wave (que sera a primeira no inicio do jogo).
 		StartCoroutine("StartNextWave");
 	}
 	
 	void Update() {
-		// This is false while we're setting up the next wave.
+		// Isso fica em false enquanto arruma a proxima wave
 		if (!shouldSpawn) {
 			return;
         }
 
-		// Start the next wave when we've spawned all our enemies and the player
-		// has killed them all or that there were no enemies killed in last 20 secs
-		// so we can assume that enemy could not be found and next wave is started.
+		// Inicia a próxima onda quando:
+		// Todos os inimigos foram gerados e eliminados pelo jogador, ou
+		// Nenhum inimigo foi morto nos últimos 20 segundos,
+		// assumindo que não há mais inimigos, e a próxima onda é iniciada
 		if (spawnedThisWave == totalToSpawnForWave && (enemiesAlive == 0 || (enemiesAlive == enemiesInLastFrame && timeSinceNoEnemiesKilled > 20))) {
 			StartCoroutine("StartNextWave");
 			return;
 		}
-
-        // Add the time since Update was last called to the timer.
+			
+		// Adiciona o tempo desde a última chamada de Update ao timer
 		timer += Time.deltaTime;
 
-        // If the timer exceeds the time between spawns, we check if we need to spawn an enemy and then spawn it.
+        // Se o timer excede o tempo entre spawns, checa se precisa spawnar um inimigo, spawnando depois
 		if (timer >= spawnTime) {
-			// Spawn one enemy from each of the entries in this wave.
-            // The difficulty multiplies the number of spawned enemies for each
-            // "loop", that is each full run through all the waves.
+			// Gera um inimigo de cada entrada nesta onda
+			// A dificuldade multiplica o número de inimigos gerados para cada "loop",
+			// ou seja, a cada execução completa de todas as ondas
 			foreach (Wave.Entry entry in currentWave.entries) {
 				if (entry.spawned < (entry.count * difficulty)) {
 					Spawn(entry);
@@ -100,7 +99,7 @@ public class WaveManager : MonoBehaviour {
 
 		numberEnemies.text = enemiesAlive.ToString();
 
-		// Updating time since last enemy was killed
+		// Atualiza o tempo desde que o ultimo inimigo foi morto
 		if (enemiesInLastFrame == enemiesAlive) {
 			timeSinceNoEnemiesKilled += Time.deltaTime;
 		} else {
@@ -113,9 +112,7 @@ public class WaveManager : MonoBehaviour {
 		numberEnemies.GetComponent<Animation>().Play();
 	}
 
-	/**
-	 * Sets the new wave and its requirements
-	 */
+	// Ajeita a nova wave e seus requerimentos
 	IEnumerator StartNextWave() {
 		shouldSpawn = false;
 
@@ -126,7 +123,7 @@ public class WaveManager : MonoBehaviour {
 		} else {
 			difficulty++;
 
-			// resetting the spawned variable in the last defined wave
+			// Redefinindo a variável "spawned" na última onda definida
 			foreach (Wave.Entry entry in waves [waves.Length - 1].entries) {
 				entry.spawned = 0;
 			}
@@ -134,8 +131,8 @@ public class WaveManager : MonoBehaviour {
 			currentWave = waves [waves.Length - 1];
 		}
 
-        // The difficulty multiplies the number of spawned enemies for each
-        // "loop", that is each full run through all the waves.
+		// A dificuldade multiplica o número de inimigos gerados para cada "loop",
+		// ou seja, a cada execução completa de todas as ondas
         totalToSpawnForWave = 0;
 		foreach (Wave.Entry entry in currentWave.entries) {
 			totalToSpawnForWave += (entry.count * difficulty);
@@ -151,38 +148,37 @@ public class WaveManager : MonoBehaviour {
 	}
 
 	/**
-	 * Spawn enemies.
- 	 * 
-	 * This method is called at regular intervals, but all the ways this function 
-	 * can end up not spawning an enemy means it could be many intervals between each 
-	 * actual spawn and our enemies will spawn very irregularly. That just 
-	 * makes it seem more random.
-	 */
+ 	* Gera inimigos
+ 	* 
+ 	 Este metodo e chamado em intervalos regulares, mas devido a todas as condicoes
+ 	 que podem impedir a geracao de um inimigo, pode haver muitos intervalos entre
+ 	 cada geracao real, fazendo com que os inimigos sejam gerados de forma muito
+ 	 irregular. Isso apenas faz com que pareça mais aleatorio.
+ 	*/
 	void Spawn(Wave.Entry entry) {
-		// Reset the timer.
+		// Reseta o timer.
 		timer = 0f;
 		
-		// If the player has no health left, stop spawning.
+		// Se a vida do player chega a 0, para de spawnar
 		if (playerHealth.currentHealth <= 0f) {
 			return;
 		}
 		
-		// Find a random position roughly on the level.
+		// Encontra uma posicao aleatoria aproximadamente no nível
 		Vector3 randomPosition = Random.insideUnitSphere * 35;
 		randomPosition.y = 0;
-		
-		// Find the closest position on the nav mesh to our random position.
-		// If we can't find a valid position return and try again.
+
+		// Encontra a posicao mais proxima na malha de navegacao para nossa posicao aleatoria
+		// Se nao for possivel encontrar uma posicao valida, retorna e tenta novamente
 		UnityEngine.AI.NavMeshHit hit;
 		if (!UnityEngine.AI.NavMesh.SamplePosition(randomPosition, out hit, 5, 1)) {
 			return;
 		}
 		
-		// We have a valid spawn position on the nav mesh.
+		// Tem uma posicao valida de spawn no nav mesh
 		spawnPosition = hit.position;
 		
-		// Check if this position is visible on the screen, if it is we
-		// return and try again.
+		// Verifica se essa posicao e visivel na tela, se for, retorna e tenta novamente
 		Vector3 screenPos = Camera.main.WorldToScreenPoint(spawnPosition);
 		if ((screenPos.x > -bufferDistance && screenPos.x < (Screen.width + bufferDistance)) && 
 		    (screenPos.y > -bufferDistance && screenPos.y < (Screen.height + bufferDistance))) 
@@ -190,9 +186,9 @@ public class WaveManager : MonoBehaviour {
 			return;
 		}
 
-		// We passed all the checks, spawn our enemy.
+		// Passando por todas as checagens, spawna o inimigo
 		GameObject enemy =  Instantiate(entry.enemy, spawnPosition, Quaternion.identity) as GameObject;
-		// Multiply health and score value by the current difficulty.
+		// Multiplica a vida e o valor do score pela dificuldade atual
 		enemy.GetComponent<EnemyHealth>().startingHealth *= difficulty;
 		enemy.GetComponent<EnemyHealth>().scoreValue *= difficulty;
 		

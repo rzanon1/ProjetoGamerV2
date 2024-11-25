@@ -4,19 +4,19 @@ using System.Collections;
 
 public class ScoreManager : MonoBehaviour {
 
-	// The player's score.
+	// Pontuacao do jogador
 	int score;       
 	
-	// Reference to the Text component.
+	// Referencia o componente de Text
 	public Text number;
 
 	void Awake() {
-		// Reset the score.
+		// Reseta o score.
 		score = 0;
 	}
 
 	void Update() {
-		// Set the displayed text to be the word "Score" followed by the score value.
+		// Ajusta o texto do score mostrado, no formato "Score: Valor"
 		number.text = score.ToString();
 	}
 

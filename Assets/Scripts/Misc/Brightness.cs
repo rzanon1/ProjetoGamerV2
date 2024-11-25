@@ -5,8 +5,8 @@ using UnityEngine;
 [AddComponentMenu("Image Effects/Color Adjustments/Brightness")]
 public class Brightness : MonoBehaviour {
 
-    /// Provides a shader property that is set in the inspector
-    /// and a material instantiated from the shader
+	/// Fornece uma propriedade de shader que e definida no inspector
+	/// e um material instanciado a partir do shader
     public Shader shaderDerp;
     Material m_Material;
 
@@ -14,14 +14,14 @@ public class Brightness : MonoBehaviour {
     public float brightness = 1f;
 
     void Start() {
-        // Disable if we don't support image effects
+        // Desabilita se nao supoirta efeitos de imagem
         if (!SystemInfo.supportsImageEffects) {
             enabled = false;
             return;
         }
 
-        // Disable the image effect if the shader can't
-        // run on the users graphics card
+		// Eu desativo o efeito de imagem se o shader nao puder
+		// rodar na placa de video do usuario
         if (!shaderDerp || !shaderDerp.isSupported)
             enabled = false;
     }

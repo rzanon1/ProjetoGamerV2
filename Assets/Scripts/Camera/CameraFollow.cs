@@ -3,32 +3,32 @@ using System.Collections;
 
 public class CameraFollow : MonoBehaviour {
 
-	// The position that that camera will be following.
+	// Posicao que a camera vai seguir
 	public Transform target; 
-	// The speed with which the camera will be following.
+	// Velocidade da camera
 	public float smoothing = 5f;     
-	// reference to mini map camera object
+	// referencia para o gameobj do minimapa
 	public GameObject minimap;
 
-	// The initial offset from the target.
+	// Deslocamento inicial do alvo
 	Vector3 offset;
 
 	void Start() {
-		// Calculate the initial offset.
+		// Calcula o deslocamento inicial
 		offset = transform.position - target.position;
 	}
 
 	void FixedUpdate () {
-		// Create a postion the camera is aiming for based on the offset from the target.
+		// Cria uma posição que a câmera está apontando com base no deslocamento do alvo
 		Vector3 targetCamPos = target.position + offset;
 		
-		// Smoothly interpolate between the camera's current position and it's target position.
+		// Interpola suavemente entre a posicao atual da camera e a posicao do alvo 
 		transform.position = Vector3.Lerp (transform.position, targetCamPos, smoothing * Time.deltaTime);
 	}
 
 	void Update () {
 		if (Input.GetButtonDown("MiniMap")) {
-			// Toggle minimap
+			// Ativa o minimapa
 			minimap.SetActive(!minimap.activeInHierarchy);
 		}
 	}
